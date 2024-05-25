@@ -1,13 +1,28 @@
 import fastify from "fastify";
+import crypto from "crypto";
 import { knex } from "./database";
+import { env } from "./env";
 
 const app = fastify({ logger: true });
 
-app.get("/hello", async (request, reply) => {
-  const tables = await knex("sqlite_schema").select("*");
-  return tables;
+app.post("/transactions", async (request, reply) => {
+  const transactions = await knex("transactions")
+    .insert({
+      id: crypto.randomUUID(),
+      title: "teste",
+      amount: 1000,
+    })
+    .returning("*");
+  return transactions;
 });
 
-app.listen({ port: 3333 }).then(() => {
-  console.log("Server is running on port 3333");
+app.get("/transactions", async (request, reply) => {
+  const transactions = await knex("transactions")
+    .where("amount", ">", 100)
+    .select("*");
+  return transactions;
+});
+
+app.listen({ port: Number(env.PORT) }).then(() => {
+  console.log(`Server is running on port ${env.PORT}`);
 });
